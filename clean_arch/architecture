@@ -1,0 +1,51 @@
+feature/
+│
+├── brick.yaml
+│
+├── README.md
+│
+└── __brick__/
+    │
+    └── lib/
+        │
+        └── features/
+            │
+            └── {{name.snakeCase()}}/
+                │
+                ├── data/
+                │   │
+                │   ├── datasource/
+                │   │   ├── {{name.snakeCase()}}_remote_datasource.dart
+                │   │   └── {{name.snakeCase()}}_local_datasource.dart
+                │   │
+                │   ├── models/
+                │   │   └── {{name.snakeCase()}}_model.dart
+                │   │
+                │   └── repositories/
+                │       └── {{name.snakeCase()}}_repository_impl.dart
+                │
+                ├── domain/
+                │   │
+                │   ├── entities/
+                │   │   └── {{name.snakeCase()}}_entity.dart
+                │   │
+                │   ├── repositories/
+                │   │   └── {{name.snakeCase()}}_repository.dart
+                │   │
+                │   └── usecases/
+                │       ├── get_{{name.snakeCase()}}_usecase.dart
+                │       ├── create_{{name.snakeCase()}}_usecase.dart
+                │       ├── update_{{name.snakeCase()}}_usecase.dart
+                │       └── delete_{{name.snakeCase()}}_usecase.dart
+                │
+                └── presentation/
+                    │
+                    ├── cubit/
+                    │   ├── {{name.snakeCase()}}_cubit.dart
+                    │   └── {{name.snakeCase()}}_state.dart
+                    │
+                    ├── screens/
+                    │   ├── {{name.snakeCase()}}_screen.dart
+                    │   └── {{name.snakeCase()}}_details_screen.dart
+                    │
+                    └── widgets/
