@@ -1,0 +1,5 @@
+bricks:
+  clean_arch:
+    path: clean_arch
+  feature:
+    path: clean_arch
