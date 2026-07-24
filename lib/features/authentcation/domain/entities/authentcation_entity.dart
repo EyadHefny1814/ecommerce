@@ -1,0 +1,3 @@
+class AuthentcationEntity {
+  const AuthentcationEntity();
+}

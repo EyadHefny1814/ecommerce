@@ -1,4 +1,4 @@
-name: flutter_application_1
+name: ecommerce_app
 description: "A new Flutter project."
 publish_to: 'none'
 
@@ -11,10 +11,12 @@ dependencies:
   flutter:
     sdk: flutter
 
+  flutter_bloc: ^9.1.1
   cupertino_icons: ^1.0.8
   go_router: ^16.2.0
   dio: ^5.10.0
   cached_network_image: ^3.4.1
+  get_it: ^8.0.3
 
 dev_dependencies:
   flutter_test:
