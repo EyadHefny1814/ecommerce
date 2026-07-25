@@ -3,10 +3,11 @@ import 'package:go_router/go_router.dart';
 import '../../features/authentcation/presentation/pages/login_screen.dart';
 import '../../features/authentcation/presentation/pages/signup_screen.dart';
 import 'routes.dart';
+import '../../features/authentcation/presentation/pages/homepage.dart';
 
 
 final appRouter = GoRouter(
-  initialLocation: Routes.login,
+  initialLocation: Routes.home,
   routes: [
     GoRoute(
       path: Routes.login,
@@ -15,6 +16,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: Routes.signup,
       builder: (context, state) => const SignupScreen(),
+    ),
+   GoRoute(
+      path: Routes.home,
+      builder: (context, state) => const HomePage(),
     ),
   ],
 );
