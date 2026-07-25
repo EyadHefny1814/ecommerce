@@ -5,6 +5,7 @@ import '../../features/authentcation/presentation/pages/signup_screen.dart';
 import 'routes.dart';
 import '../../features/product/presentation/screens/product_screen.dart';
 
+import '../../features/product/presentation/screens/home_screen.dart';
 
 final appRouter = GoRouter(
   initialLocation: Routes.home,
@@ -19,7 +20,13 @@ final appRouter = GoRouter(
     ),
    GoRoute(
       path: Routes.home,
-      builder: (context, state) => const HomePage(),
+      builder: (context, state) => const MainScreen(),
     ),
+    GoRoute(
+      path: Routes.product,
+      builder: (context, state) => const ProductScreen(),
+    ),
+
+
   ],
 );
