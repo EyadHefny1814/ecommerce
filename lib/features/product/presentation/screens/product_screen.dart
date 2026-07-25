@@ -1,28 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'product_details_screen.dart';
+import 'product_cart_screen.dart';
+import 'product_favorites_screen.dart';
+import 'product_Profile_screen.dart';
 
-void main() {
-  runApp(const AthryxApp());
-}
-
-class AthryxApp extends StatelessWidget {
-  const AthryxApp({super.key});
-
-  @override
-  Widget build(BuildContext meContext) {
-    return MaterialApp(
-      title: 'ATHRYX App Concept',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF0D0D0D),
-        primaryColor: const Color(0xFFFF3B00),
-      ),
-      home: const HomePage(),
-    );
-  }
-}
-
-// Model Classes
+// Models
 class Product {
   final int id;
   final String name;
@@ -65,21 +48,21 @@ class CartItem {
   });
 }
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+class ProductScreen extends StatefulWidget {
+  final String userName; // اسم المستخدم الذي قام بتسجيل الدخول
+
+  const ProductScreen({super.key, this.userName = "Mohamed"});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<ProductScreen> createState() => _ProductScreenState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _ProductScreenState extends State<ProductScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-
-  int _selectedNavIndex = 0; // 0: Home, 2: Cart
+  int _selectedNavIndex = 0;
   String _selectedCategory = 'All';
   String _searchQuery = '';
 
-  // Banner Carousel Setup
   late PageController _bannerController;
   int _currentBannerIndex = 0;
   Timer? _bannerTimer;
@@ -108,7 +91,6 @@ class _HomePageState extends State<HomePage> {
     },
   ];
 
-  // Database
   final List<Product> _products = [
     Product(
       id: 1,
@@ -185,15 +167,6 @@ class _HomePageState extends State<HomePage> {
       qty: 1,
       img: "https://pngimg.com/uploads/bag/bag_PNG101413.png",
     ),
-    CartItem(
-      id: 3,
-      title: "Adidas Training T-Shirt",
-      sub: "",
-      meta: "Size: L | Color: Black",
-      price: 28.0,
-      qty: 1,
-      img: "https://pngimg.com/uploads/tshirt/tshirt_PNG5438.png",
-    ),
   ];
 
   @override
@@ -231,34 +204,63 @@ class _HomePageState extends State<HomePage> {
     return total;
   }
 
-  double get _cartSubtotal {
-    double total = 0.0;
-    for (var item in _cart) {
-      total += item.price * item.qty;
-    }
-    return total;
+  void _addToCart(Product product) {
+    setState(() {
+      int index = _cart.indexWhere((item) => item.id == product.id);
+      if (index != -1) {
+        _cart[index].qty++;
+      } else {
+        _cart.add(
+          CartItem(
+            id: product.id,
+            title: product.name,
+            sub: product.sub,
+            meta: 'Default Size',
+            price: product.price,
+            qty: 1,
+            img: product.img,
+          ),
+        );
+      }
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${product.name} added to cart!'),
+        duration: const Duration(seconds: 1),
+        backgroundColor: const Color(0xFFFF3B00),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    List<Widget> pages = [
+      _buildHomeContent(),
+      ProductCartScreen(
+        cart: _cart,
+        onCartUpdated: () => setState(() {}),
+      ),
+      ProductFavoritesScreen(
+        favoriteProducts: _products.where((p) => p.isFavorite).toList(),
+        onToggleFavorite: (product) {
+          setState(() {
+            product.isFavorite = !product.isFavorite;
+          });
+        },
+        onAddToCart: _addToCart,
+      ),
+      ProductProfileScreen(userName: widget.userName),
+    ];
+
     return Scaffold(
       key: _scaffoldKey,
       drawer: _buildDrawer(),
-      body: SafeArea(
-        child: IndexedStack(
-          index: _selectedNavIndex == 2 ? 1 : 0,
-          children: [
-            _buildHomeView(),
-            _buildCartView(),
-          ],
-        ),
-      ),
+      body: SafeArea(child: pages[_selectedNavIndex]),
       bottomNavigationBar: _buildBottomNavigationBar(),
     );
   }
 
-  // ==================== HOME VIEW ====================
-  Widget _buildHomeView() {
+  Widget _buildHomeContent() {
     List<Product> filteredProducts = _products.where((p) {
       bool matchesCategory =
           _selectedCategory == 'All' || p.category == _selectedCategory;
@@ -305,7 +307,7 @@ class _HomePageState extends State<HomePage> {
                   children: [
                     IconButton(
                       icon: const Icon(Icons.notifications_none, size: 26),
-                      onPressed: () => setState(() => _selectedNavIndex = 2),
+                      onPressed: () => setState(() => _selectedNavIndex = 1),
                     ),
                     Positioned(
                       right: 4,
@@ -316,17 +318,10 @@ class _HomePageState extends State<HomePage> {
                           color: Color(0xFFFF3B00),
                           shape: BoxShape.circle,
                         ),
-                        constraints: const BoxConstraints(
-                          minWidth: 16,
-                          minHeight: 16,
-                        ),
+                        constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
                         child: Text(
                           '$_totalCartCount',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
                           textAlign: TextAlign.center,
                         ),
                       ),
@@ -337,7 +332,7 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
 
-          // User Greeting
+          // Dynamic Greeting Name
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
             child: Row(
@@ -346,19 +341,16 @@ class _HomePageState extends State<HomePage> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Good Evening 👋',
-                      style: TextStyle(color: Color(0xFF8E8E93), fontSize: 13),
-                    ),
+                    const Text('Good Evening 👋', style: TextStyle(color: Color(0xFF8E8E93), fontSize: 13)),
                     const SizedBox(height: 2),
                     ShaderMask(
                       shaderCallback: (bounds) => const LinearGradient(
                         colors: [Colors.white, Color(0xFFFF3B00)],
                         stops: [0.6, 1.0],
                       ).createShader(bounds),
-                      child: const Text(
-                        'MOHAMED & EYAD',
-                        style: TextStyle(
+                      child: Text(
+                        widget.userName.toUpperCase(),
+                        style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w900,
                           fontStyle: FontStyle.italic,
@@ -385,7 +377,7 @@ class _HomePageState extends State<HomePage> {
 
           const SizedBox(height: 15),
 
-          // Search Container
+          // Search Bar
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
@@ -428,7 +420,7 @@ class _HomePageState extends State<HomePage> {
 
           const SizedBox(height: 15),
 
-          // Banner Slider
+          // Banners
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Column(
@@ -449,20 +441,12 @@ class _HomePageState extends State<HomePage> {
                         final banner = _banners[index];
                         return Stack(
                           children: [
-                            Positioned.fill(
-                              child: Image.network(
-                                banner['img']!,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
+                            Positioned.fill(child: Image.network(banner['img']!, fit: BoxFit.cover)),
                             Positioned.fill(
                               child: Container(
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
-                                    colors: [
-                                      Colors.black.withOpacity(0.85),
-                                      Colors.black.withOpacity(0.3),
-                                    ],
+                                    colors: [Colors.black.withOpacity(0.85), Colors.black.withOpacity(0.3)],
                                     begin: Alignment.centerLeft,
                                     end: Alignment.centerRight,
                                   ),
@@ -477,46 +461,25 @@ class _HomePageState extends State<HomePage> {
                                 children: [
                                   RichText(
                                     text: TextSpan(
-                                      style: const TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w900,
-                                        fontStyle: FontStyle.italic,
-                                        color: Colors.white,
-                                      ),
+                                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, fontStyle: FontStyle.italic, color: Colors.white),
                                       children: [
                                         TextSpan(text: '${banner['title1']}\n'),
-                                        TextSpan(
-                                          text: banner['title2'],
-                                          style: const TextStyle(color: Color(0xFFFF3B00)),
-                                        ),
+                                        TextSpan(text: banner['title2'], style: const TextStyle(color: Color(0xFFFF3B00))),
                                       ],
                                     ),
                                   ),
                                   const SizedBox(height: 6),
-                                  Text(
-                                    banner['sub']!,
-                                    style: const TextStyle(color: Color(0xFFDDDDDD), fontSize: 11),
-                                  ),
+                                  Text(banner['sub']!, style: const TextStyle(color: Color(0xFFDDDDDD), fontSize: 11)),
                                   const SizedBox(height: 10),
                                   ElevatedButton(
-                                    onPressed: () => setState(() => _selectedNavIndex = 2),
+                                    onPressed: () => setState(() => _selectedNavIndex = 1),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: const Color(0xFFFF3B00),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                                       minimumSize: Size.zero,
-                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                     ),
-                                    child: Text(
-                                      banner['btn']!,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 11,
-                                      ),
-                                    ),
+                                    child: Text(banner['btn']!, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11)),
                                   ),
                                 ],
                               ),
@@ -548,8 +511,20 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
 
-          // Categories Section
-          _buildSectionHeader("Categories", () => setState(() => _selectedCategory = 'All')),
+          // Categories Cards
+          Padding(
+            padding: const EdgeInsets.only(left: 20, right: 20, top: 18, bottom: 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Categories', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
+                GestureDetector(
+                  onTap: () => setState(() => _selectedCategory = 'All'),
+                  child: const Text('View all', style: TextStyle(color: Color(0xFFFF3B00), fontSize: 12, fontWeight: FontWeight.w500)),
+                )
+              ],
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
@@ -563,20 +538,20 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
 
-          // Products Section
-          _buildSectionHeader(
-            _selectedCategory == 'All' ? 'Best Sellers' : _selectedCategory,
-            () {},
+          // Products Section Title
+          Padding(
+            padding: const EdgeInsets.only(left: 20, right: 20, top: 18, bottom: 12),
+            child: Text(
+              _selectedCategory == 'All' ? 'Best Sellers' : _selectedCategory,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+            ),
           ),
+
+          // Products Grid View
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: filteredProducts.isEmpty
-                ? const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(20.0),
-                      child: Text('No items found.', style: TextStyle(color: Colors.grey)),
-                    ),
-                  )
+                ? const Center(child: Padding(padding: EdgeInsets.all(20.0), child: Text('No items found.', style: TextStyle(color: Colors.grey))))
                 : GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
@@ -599,28 +574,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildSectionHeader(String title, VoidCallback onViewAll) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 20, right: 20, top: 18, bottom: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
-          ),
-          GestureDetector(
-            onTap: onViewAll,
-            child: const Text(
-              'View all',
-              style: TextStyle(color: Color(0xFFFF3B00), fontSize: 12, fontWeight: FontWeight.w500),
-            ),
-          )
-        ],
-      ),
-    );
-  }
-
   Widget _buildCategoryCard(String name, IconData icon) {
     bool isSelected = _selectedCategory == name;
     return GestureDetector(
@@ -631,21 +584,13 @@ class _HomePageState extends State<HomePage> {
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.08),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected ? const Color(0xFFFF3B00) : Colors.white.withOpacity(0.12),
-          ),
+          border: Border.all(color: isSelected ? const Color(0xFFFF3B00) : Colors.white.withOpacity(0.12)),
         ),
         child: Column(
           children: [
             Icon(icon, color: const Color(0xFFFF3B00), size: 22),
             const SizedBox(height: 8),
-            Text(
-              name,
-              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.white),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            )
+            Text(name, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.white), textAlign: TextAlign.center),
           ],
         ),
       ),
@@ -667,71 +612,57 @@ class _HomePageState extends State<HomePage> {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               GestureDetector(
-                onTap: () => setState(() => prod.isFavorite = !prod.isFavorite),
+                onTap: () {
+                  setState(() {
+                    prod.isFavorite = !prod.isFavorite;
+                  });
+                },
                 child: Icon(
                   prod.isFavorite ? Icons.favorite : Icons.favorite_border,
                   color: prod.isFavorite ? const Color(0xFFFF3B00) : Colors.grey,
-                  size: 16,
+                  size: 18,
                 ),
               ),
             ],
           ),
           GestureDetector(
-            onTap: () => setState(() => _selectedNavIndex = 2),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ProductDetailsScreen(
+                    product: prod,
+                    onAddToCart: () => _addToCart(prod),
+                  ),
+                ),
+              );
+            },
             child: Center(
-              child: Image.network(
-                prod.img,
-                height: 85,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) =>
-                    const Icon(Icons.fitness_center, size: 50, color: Colors.grey),
-              ),
+              child: Image.network(prod.img, height: 85, fit: BoxFit.contain),
             ),
           ),
           const SizedBox(height: 8),
-          Text(
-            prod.name,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          Text(
-            prod.sub,
-            style: const TextStyle(fontSize: 10, color: Color(0xFF8E8E93)),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
+          Text(prod.name, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white), maxLines: 1),
+          Text(prod.sub, style: const TextStyle(fontSize: 10, color: Color(0xFF8E8E93)), maxLines: 1),
           const SizedBox(height: 4),
           Row(
             children: [
-              ...List.generate(
-                5,
-                (index) => const Icon(Icons.star, color: Color(0xFFFF3B00), size: 10),
-              ),
+              ...List.generate(5, (index) => const Icon(Icons.star, color: Color(0xFFFF3B00), size: 10)),
               const SizedBox(width: 2),
-              Text(
-                '(${prod.rating})',
-                style: const TextStyle(color: Color(0xFF8E8E93), fontSize: 8),
-              )
+              Text('(${prod.rating})', style: const TextStyle(color: Color(0xFF8E8E93), fontSize: 8)),
             ],
           ),
           const Spacer(),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                '\$${prod.price.toStringAsFixed(0)}.00',
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white),
-              ),
+              Text('\$${prod.price.toStringAsFixed(0)}.00', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white)),
               GestureDetector(
-                onTap: () => setState(() => _selectedNavIndex = 2),
+                onTap: () => _addToCart(prod),
                 child: Container(
                   width: 26,
                   height: 26,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFF3B00),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
+                  decoration: BoxDecoration(color: const Color(0xFFFF3B00), borderRadius: BorderRadius.circular(6)),
                   child: const Icon(Icons.shopping_bag, color: Colors.white, size: 12),
                 ),
               )
@@ -742,229 +673,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ==================== CART VIEW ====================
-  Widget _buildCartView() {
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 20, right: 20, top: 20, bottom: 10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: const [
-                Text(
-                  'My Cart',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
-                ),
-                Text(
-                  'Edit',
-                  style: TextStyle(color: Color(0xFFFF3B00), fontSize: 15, fontWeight: FontWeight.w500),
-                )
-              ],
-            ),
-          ),
-          _cart.isEmpty
-              ? const Padding(
-                  padding: EdgeInsets.all(40.0),
-                  child: Center(
-                    child: Text('Your cart is empty.', style: TextStyle(color: Colors.grey)),
-                  ),
-                )
-              : ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _cart.length,
-                  itemBuilder: (context, index) {
-                    final item = _cart[index];
-                    return _buildCartItemCard(item, index);
-                  },
-                ),
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: const Color(0xFF141414),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: Colors.white.withOpacity(0.05)),
-            ),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Subtotal', style: TextStyle(color: Color(0xFF8E8E93), fontSize: 14)),
-                    Text('\$${_cartSubtotal.toStringAsFixed(0)}.00',
-                        style: const TextStyle(color: Color(0xFF8E8E93), fontSize: 14)),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: const [
-                    Text('Shipping', style: TextStyle(color: Color(0xFF8E8E93), fontSize: 14)),
-                    Text('\$0.00', style: TextStyle(color: Color(0xFF8E8E93), fontSize: 14)),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                const Divider(color: Colors.white10),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Total',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 15)),
-                    Text(
-                      '\$${_cartSubtotal.toStringAsFixed(0)}.00',
-                      style: const TextStyle(
-                          color: Color(0xFFFF3B00), fontWeight: FontWeight.bold, fontSize: 15),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFF3B00),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 5,
-                ),
-                child: const Text(
-                  'PROCEED TO CHECKOUT',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 14,
-                    letterSpacing: 0.8,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCartItemCard(CartItem item, int index) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF141414),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 80,
-            height: 80,
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: const Color(0xFF090909),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.white.withOpacity(0.05)),
-            ),
-            child: Image.network(item.img, fit: BoxFit.contain),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: SizedBox(
-              height: 80,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item.title,
-                        style: const TextStyle(
-                            fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      if (item.sub.isNotEmpty)
-                        Text(item.sub,
-                            style: const TextStyle(fontSize: 11, color: Color(0xFF8E8E93))),
-                      Text(item.meta,
-                          style: const TextStyle(fontSize: 11, color: Color(0xFF8E8E93))),
-                    ],
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1E1E1E),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              if (item.qty > 1) {
-                                item.qty--;
-                              }
-                            });
-                          },
-                          child: const Text('-',
-                              style: TextStyle(color: Colors.white, fontSize: 16)),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 10),
-                          child: Text('${item.qty}',
-                              style: const TextStyle(
-                                  fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
-                        ),
-                        GestureDetector(
-                          onTap: () => setState(() => item.qty++),
-                          child: const Text('+',
-                              style: TextStyle(color: Colors.white, fontSize: 16)),
-                        ),
-                      ],
-                    ),
-                  )
-                ],
-              ),
-            ),
-          ),
-          SizedBox(
-            height: 80,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                GestureDetector(
-                  onTap: () => setState(() => _cart.removeAt(index)),
-                  child: const Icon(Icons.close, color: Color(0xFF888888), size: 16),
-                ),
-                Text(
-                  '\$${(item.price * item.qty).toStringAsFixed(0)}.00',
-                  style: const TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
-                ),
-              ],
-            ),
-          )
-        ],
-      ),
-    );
-  }
-
-  // ==================== DRAWER ====================
   Widget _buildDrawer() {
     return Drawer(
       backgroundColor: const Color(0xFF121212),
@@ -985,35 +693,18 @@ class _HomePageState extends State<HomePage> {
                     border: Border.all(color: Colors.white.withOpacity(0.1)),
                   ),
                   child: const Center(
-                    child: Text(
-                      'A',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w900,
-                        fontStyle: FontStyle.italic,
-                        color: Color(0xFFFF3B00),
-                      ),
-                    ),
+                    child: Text('A', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, fontStyle: FontStyle.italic, color: Color(0xFFFF3B00))),
                   ),
                 ),
                 const SizedBox(width: 14),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text(
-                      'Mohamed & Eyad',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-                    ),
-                    SizedBox(height: 3),
-                    Text(
-                      'Premium Member',
-                      style: TextStyle(
-                          fontSize: 12, color: Color(0xFFFF3B00), fontWeight: FontWeight.w500),
-                    ),
+                  children: [
+                    Text(widget.userName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                    const SizedBox(height: 3),
+                    const Text('Premium Member', style: TextStyle(fontSize: 12, color: Color(0xFFFF3B00), fontWeight: FontWeight.w500)),
                   ],
                 ),
-                const Spacer(),
-                const Icon(Icons.chevron_right, color: Colors.white),
               ],
             ),
           ),
@@ -1022,45 +713,34 @@ class _HomePageState extends State<HomePage> {
             Navigator.pop(context);
             setState(() => _selectedNavIndex = 0);
           }),
-          _buildDrawerTile(Icons.grid_view, 'Categories', onTap: () => Navigator.pop(context)),
           _buildDrawerTile(Icons.shopping_bag, 'Orders', onTap: () {
+            Navigator.pop(context);
+            setState(() => _selectedNavIndex = 1);
+          }),
+          _buildDrawerTile(Icons.favorite_border, 'Wishlist', onTap: () {
             Navigator.pop(context);
             setState(() => _selectedNavIndex = 2);
           }),
-          _buildDrawerTile(Icons.favorite_border, 'Wishlist', onTap: () => Navigator.pop(context)),
-          _buildDrawerTile(Icons.location_on_outlined, 'Addresses', onTap: () => Navigator.pop(context)),
-          _buildDrawerTile(Icons.credit_card, 'Payment Methods', onTap: () => Navigator.pop(context)),
-          _buildDrawerTile(Icons.settings, 'Settings', onTap: () => Navigator.pop(context)),
-          _buildDrawerTile(Icons.help_outline, 'Help & Support', onTap: () => Navigator.pop(context)),
-          _buildDrawerTile(Icons.logout, 'Log Out', onTap: () => Navigator.pop(context)),
+          _buildDrawerTile(Icons.person_outline, 'Profile', onTap: () {
+            Navigator.pop(context);
+            setState(() => _selectedNavIndex = 3);
+          }),
         ],
       ),
     );
   }
 
-  Widget _buildDrawerTile(IconData icon, String title,
-      {bool selected = false, required VoidCallback onTap}) {
+  Widget _buildDrawerTile(IconData icon, String title, {bool selected = false, required VoidCallback onTap}) {
     return ListTile(
-      leading: Icon(
-        icon,
-        color: selected ? const Color(0xFFFF3B00) : Colors.white,
-        size: 20,
-      ),
-      title: Text(
-        title,
-        style: TextStyle(
-          color: selected ? const Color(0xFFFF3B00) : Colors.white,
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
+      leading: Icon(icon, color: selected ? const Color(0xFFFF3B00) : Colors.white, size: 20),
+      title: Text(title, style: TextStyle(color: selected ? const Color(0xFFFF3B00) : Colors.white, fontSize: 14, fontWeight: FontWeight.w500)),
       selected: selected,
       selectedTileColor: const Color(0xFF1E1E1E),
       onTap: onTap,
     );
   }
 
-  // ==================== BOTTOM NAVIGATION BAR ====================
+  // Bottom Nav الخالي من التصنيفات (Categories)
   Widget _buildBottomNavigationBar() {
     return BottomNavigationBar(
       backgroundColor: Colors.black,
@@ -1070,24 +750,9 @@ class _HomePageState extends State<HomePage> {
       currentIndex: _selectedNavIndex,
       selectedFontSize: 10,
       unselectedFontSize: 10,
-      onTap: (index) {
-        if (index == 1) {
-          _scaffoldKey.currentState?.openDrawer();
-        } else {
-          setState(() {
-            _selectedNavIndex = index;
-          });
-        }
-      },
+      onTap: (index) => setState(() => _selectedNavIndex = index),
       items: [
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: 'Home',
-        ),
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.grid_view),
-          label: 'Categories',
-        ),
+        const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
         BottomNavigationBarItem(
           icon: Stack(
             clipBehavior: Clip.none,
@@ -1099,37 +764,17 @@ class _HomePageState extends State<HomePage> {
                   top: -4,
                   child: Container(
                     padding: const EdgeInsets.all(2),
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFFF3B00),
-                      shape: BoxShape.circle,
-                    ),
-                    constraints: const BoxConstraints(
-                      minWidth: 14,
-                      minHeight: 14,
-                    ),
-                    child: Text(
-                      '$_totalCartCount',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 8,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
+                    decoration: const BoxDecoration(color: Color(0xFFFF3B00), shape: BoxShape.circle),
+                    constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
+                    child: Text('$_totalCartCount', style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
                   ),
                 )
             ],
           ),
           label: 'Cart',
         ),
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.favorite_border),
-          label: 'Favorites',
-        ),
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.person_outline),
-          label: 'Profile',
-        ),
+        const BottomNavigationBarItem(icon: Icon(Icons.favorite_border), label: 'Favorites'),
+        const BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
       ],
     );
   }
