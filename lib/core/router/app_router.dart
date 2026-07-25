@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/authentcation/presentation/pages/login_screen.dart';
 import '../../features/authentcation/presentation/pages/signup_screen.dart';
 import 'routes.dart';
-import '../../features/authentcation/presentation/pages/homepage.dart';
+import '../../features/product/presentation/screens/product_screen.dart';
 
 
 final appRouter = GoRouter(
