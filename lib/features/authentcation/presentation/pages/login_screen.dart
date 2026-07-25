@@ -11,6 +11,9 @@ import '../widgets/login_header.dart';
 import '../widgets/password_text_field.dart';
 import '../widgets/sign_up_text.dart';
 import '../widgets/social_login.dart';
+import 'package:go_router/go_router.dart';
+
+
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -60,7 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _handleSignUp() {
-    
+    context.go('/signup');
   }
 
   String? _validateEmail(String? value) {
