@@ -1,7 +1,7 @@
-import 'package:ecommerce_app/core/api/api_consumer.dart';
-import 'package:ecommerce_app/features/authentcation/data/datasource/authentication_remote_datasource.dart';
-import 'package:ecommerce_app/features/authentcation/domain/entities/user.dart';
+import 'package:ecommerce_app/core/api/api_consumer.dart' ;
 
+import 'package:ecommerce_app/features/authentcation/domain/entities/user.dart';
+import 'authentcation_remote_datasource.dart';
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final ApiConsumer api;

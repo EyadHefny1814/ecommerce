@@ -15,6 +15,19 @@ import '../../features/product/domain/usecases/get_product_usecase.dart';
 import '../../features/product/presentation/cubit/product_cubit.dart';
 
 // ================= Authentication =================
+import 'package:ecommerce_app/features/authentcation/data/datasource/authentcation_remote_datasource.dart';
+import 'package:ecommerce_app/features/authentcation/data/datasource/authentication_remote_datasource_impl.dart';
+import 'package:ecommerce_app/features/authentcation/data/repositories/authentcation_repository_impl.dart';
+
+import 'package:ecommerce_app/features/authentcation/domain/repositories/authentcation_repository.dart';
+import 'package:ecommerce_app/features/authentcation/domain/usecases/login_usecase.dart';
+import 'package:ecommerce_app/features/authentcation/domain/usecases/register_usecase.dart';
+import 'package:ecommerce_app/features/authentcation/domain/usecases/verifyemail_usecase.dart';
+
+import 'package:ecommerce_app/features/authentcation/presentation/cubit/authentcation_cubit.dart';
+
+
+
 
 final sl = GetIt.instance;
 
@@ -90,8 +103,7 @@ Future<void> init() async {
   sl.registerFactory(
     () => AuthCubit(
       sl(),
-      sl(),
-      sl(),
+      
     ),
   );
 }
