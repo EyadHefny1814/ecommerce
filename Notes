@@ -1,0 +1,17 @@
+shellRouter
+bloc provider
+query parameter
+local storage s
+hared preference
+secure storage
+sqflite
+caching data
+on board screen
+pageview for smooth navigation
+use take method for best seller
+
+
+
+✅ Supabase as the main database
+✅ flutter_secure_storage for authentication tokens
+✅ sqflite later if you want offline mode and faster loading

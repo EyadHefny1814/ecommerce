@@ -1,6 +1,4 @@
-import 'package:ecommerce_app/features/authentcation/domain/entities/user.dart';
-
-
+import '../../domain/entities/user.dart';
 
 abstract class AuthRemoteDataSource {
   Future<User> login({
@@ -12,6 +10,7 @@ abstract class AuthRemoteDataSource {
     required String name,
     required String email,
     required String password,
+    required String phonenumber,
   });
 
   Future<void> verifyEmail({

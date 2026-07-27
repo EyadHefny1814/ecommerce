@@ -3,12 +3,12 @@ import 'package:go_router/go_router.dart';
 import '../../features/authentcation/presentation/pages/login_screen.dart';
 import '../../features/authentcation/presentation/pages/signup_screen.dart';
 import 'routes.dart';
-import '../../features/product/presentation/screens/product_screen.dart';
-
+import '../services/splash_screen.dart';
+import '../../features/onboarding/onboardingscreen.dart';
 import '../../features/product/presentation/screens/home_screen.dart';
-
+import '../../features/authentcation/presentation/pages/otppage.dart';
 final appRouter = GoRouter(
-  initialLocation: Routes.home,
+  initialLocation:'/' ,
   routes: [
     GoRoute(
       path: Routes.login,
@@ -22,11 +22,25 @@ final appRouter = GoRouter(
       path: Routes.home,
       builder: (context, state) => const MainScreen(),
     ),
-    GoRoute(
-      path: Routes.product,
-      builder: (context, state) => const ProductScreen(),
-    ),
+   GoRoute(
+  path: '/',
+  name :'splash' ,
+  builder: (context, state) => const SplashScreen(),
+),
 
+GoRoute(
+  path: '/otp',
+  builder: (context, state) {
+    final email = state.extra as String;
 
+    return OtpPage(
+      email: email,
+    );
+  },
+),
+GoRoute(
+  path: '/onboarding',
+  builder: (context, state) => const OnboardingScreen(),
+),
   ],
 );

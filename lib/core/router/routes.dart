@@ -7,4 +7,5 @@ class Routes {
   static const details = '/details';
   static const cart = '/cart';
   static const favorites = '/favorites';
+ 
 }

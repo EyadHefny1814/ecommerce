@@ -24,11 +24,13 @@ class AuthRepositoryImpl implements AuthRepository {
     required String name,
     required String email,
     required String password,
+    required String phonenumber ,
   }) {
     return remote.register(
       name: name,
       email: email,
       password: password,
+      phonenumber:phonenumber,
     );
   }
 

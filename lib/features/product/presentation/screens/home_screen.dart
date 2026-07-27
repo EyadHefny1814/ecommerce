@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import '../../../authentcation/presentation/pages/login_screen.dart';
 
 
 /*
@@ -60,6 +60,9 @@ class _MainScreenState extends State<MainScreen> {
   String _selectedCategory = 'All';
   String _searchQuery = '';
 
+  // Auth State
+  bool _isLoggedIn = false;
+
   final Map<int, int> _cart = {};
   final Set<int> _favorites = {};
 
@@ -109,8 +112,43 @@ class _MainScreenState extends State<MainScreen> {
 
   int get totalCartCount => _cart.values.fold(0, (sum, count) => sum + count);
 
+  void _navigateToLogin() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+    );
+    // إذا عاد المستخدم بعد تسجيل الدخول بنجاح
+    if (result == true || result == null) {
+      setState(() {
+        _isLoggedIn = true;
+      });
+    }
+  }
+
+  void _checkAuthAndAction(VoidCallback action) {
+    if (!_isLoggedIn) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Please login first to continue!'),
+          backgroundColor: primaryOrange,
+          duration: const Duration(seconds: 2),
+          action: SnackBarAction(
+            label: 'LOGIN',
+            textColor: Colors.white,
+            onPressed: _navigateToLogin,
+          ),
+        ),
+      );
+      _navigateToLogin();
+    } else {
+      action();
+    }
+  }
+
   void _addToCart(int id) {
-    setState(() => _cart[id] = (_cart[id] ?? 0) + 1);
+    _checkAuthAndAction(() {
+      setState(() => _cart[id] = (_cart[id] ?? 0) + 1);
+    });
   }
 
   void _changeQty(int id, int delta) {
@@ -123,12 +161,14 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   void _toggleFav(int id) {
-    setState(() {
-      if (_favorites.contains(id)) {
-        _favorites.remove(id);
-      } else {
-        _favorites.add(id);
-      }
+    _checkAuthAndAction(() {
+      setState(() {
+        if (_favorites.contains(id)) {
+          _favorites.remove(id);
+        } else {
+          _favorites.add(id);
+        }
+      });
     });
   }
 
@@ -226,11 +266,6 @@ class _MainScreenState extends State<MainScreen> {
       },
     );
   }
-/*
-=====================================================
-===============(END DRAWER / PROFILE)================
-=====================================================
-*/
 
 /*
 =====================================================
@@ -261,22 +296,50 @@ class _MainScreenState extends State<MainScreen> {
                   ),
                 ),
                 _buildLogo(),
-                Stack(
+                Row(
                   children: [
-                    IconButton(
-                      icon: const Icon(Icons.notifications_none, size: 24),
-                      onPressed: () => setState(() => _currentIndex = 1),
-                    ),
-                    if (totalCartCount > 0)
-                      Positioned(
-                        right: 4,
-                        top: 4,
-                        child: CircleAvatar(
-                          radius: 8,
-                          backgroundColor: primaryOrange,
-                          child: Text('$totalCartCount', style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold)),
+                    if (!_isLoggedIn) ...[
+                      OutlinedButton(
+                        onPressed: _navigateToLogin,
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.white, width: 1.2),
+                          backgroundColor: Colors.transparent,
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
-                      )
+                        child: const Text(
+                          'Log In',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                    Stack(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.notifications_none, size: 24),
+                          onPressed: () => setState(() => _currentIndex = 1),
+                        ),
+                        if (totalCartCount > 0)
+                          Positioned(
+                            right: 4,
+                            top: 4,
+                            child: CircleAvatar(
+                              radius: 8,
+                              backgroundColor: primaryOrange,
+                              child: Text('$totalCartCount', style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold)),
+                            ),
+                          )
+                      ],
+                    ),
                   ],
                 )
               ],
@@ -292,9 +355,13 @@ class _MainScreenState extends State<MainScreen> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Good Evening 👋', style: TextStyle(color: textSub, fontSize: 12)),
-                    const SizedBox(height: 2),
-                    const Text('Mohamed', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    if (_isLoggedIn)
+                      const Text('Hey Mohamed', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold))
+                    else ...[
+                      Text('Good Evening 👋', style: TextStyle(color: textSub, fontSize: 12)),
+                      const SizedBox(height: 2),
+                      const Text('Guest', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    ],
                   ],
                 ),
                 Container(
@@ -598,11 +665,6 @@ class _MainScreenState extends State<MainScreen> {
       },
     );
   }
-/*
-=====================================================
-====================(END HOME)=======================
-=====================================================
-*/
 
 /*
 =====================================================
@@ -695,11 +757,6 @@ class _MainScreenState extends State<MainScreen> {
       ],
     );
   }
-/*
-=====================================================
-=====================(END CART)======================
-=====================================================
-*/
 
 /*
 =====================================================
@@ -765,11 +822,6 @@ class _MainScreenState extends State<MainScreen> {
       ],
     );
   }
-/*
-=====================================================
-===================(END FAVORITES)===================
-=====================================================
-*/
 
 /*
 =====================================================
@@ -840,9 +892,4 @@ class _MainScreenState extends State<MainScreen> {
       ),
     );
   }
-/*
-=====================================================
-================(END NAVIGATION)=====================
-=====================================================
-*/
 }

@@ -12,7 +12,10 @@ import '../widgets/password_text_field.dart';
 import '../widgets/sign_up_text.dart';
 import '../widgets/social_login.dart';
 import 'package:go_router/go_router.dart';
-
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../cubit/authentcation_cubit.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../widgets/asguest.dart';
 
 
 class LoginScreen extends StatefulWidget {
@@ -37,18 +40,39 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
-    if (!_formKey.currentState!.validate()) return;
+  if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isLoading = true);
+  setState(() => _isLoading = true);
 
-    
-    await Future.delayed(const Duration(seconds: 2));
+  try {
+   await context.read<AuthCubit>().login(
+  _emailController.text.trim(),
+  _passwordController.text,
+);
+    // if (!mounted) return;
+context.go('/home');
+  } on AuthApiException catch (e) {
+    String message = e.message;
 
-    if (!mounted) return;
-    setState(() => _isLoading = false);
+    if (e.code == 'email_not_confirmed') {
+      message = 'Please verify your email first.';
+    } else if (e.code == 'invalid_credentials') {
+      message = 'Invalid email or password.';
+    }
 
-
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(e.toString())),
+    );
   }
+
+  if (mounted) {
+    setState(() => _isLoading = false);
+  }
+}
 
   void _handleForgotPassword() {
    
@@ -65,6 +89,11 @@ class _LoginScreenState extends State<LoginScreen> {
   void _handleSignUp() {
     context.go('/signup');
   }
+
+
+void _handleGuest() {
+  context.go('/home');
+}
 
   String? _validateEmail(String? value) {
     if (value == null || value.trim().isEmpty) {
@@ -141,8 +170,14 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const Spacer(flex: 2),
                       SignUpText(onSignUpTap: _handleSignUp),
-                      const SizedBox(height: 16),
                       
+                      const SizedBox(height: 20),
+
+ContinueAsGuest(
+  onTap: _handleGuest,
+),
+
+const SizedBox(height: 20),
                     ],
                   ),
                 ),

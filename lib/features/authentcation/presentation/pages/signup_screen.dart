@@ -6,7 +6,8 @@ import '../signup_widgets/signup_button.dart';
 import '../widgets/auth_colors.dart';
 import '../signup_widgets/auth_footer.dart';
 import 'package:go_router/go_router.dart';
-import '../signup_widgets/background_image.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../cubit/authentcation_cubit.dart';
 
 
 
@@ -37,19 +38,39 @@ class _SignupScreenState extends State<SignupScreen> {
     super.dispose();
   }
 
-  Future<void> _handleSignUp() async {
-    if (!_formKey.currentState!.validate()) return;
+ Future<void> _handleSignUp() async {
+  if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isLoading = true);
+  setState(() => _isLoading = true);
 
-    // TODO: replace with a call to the auth use case / bloc / cubit.
-    await Future.delayed(const Duration(seconds: 2));
+  try {
+    await context.read<AuthCubit>().register(
+      name: _fullNameController.text.trim(),
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+      phonenumber: _phoneController.text.trim(),
+    );
 
     if (!mounted) return;
-    setState(() => _isLoading = false);
 
-    // TODO: navigate to the OTP verification screen on success.
+    context.push(
+      '/otp',
+      extra: _emailController.text.trim(),
+    );
+  } catch (e) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(e.toString()),
+      ),
+    );
+  } finally {
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
   }
+}
 
   void _handleGoogleSignUp() {
     // TODO: trigger Google sign-in flow.
